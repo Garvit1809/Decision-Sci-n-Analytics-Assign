@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Modal from '@mui/material/Modal';
+import { TextField } from "@mui/material";
 
 const Section = styled.div`
   /* width: 100vw; */
@@ -25,6 +30,7 @@ const DailySchedule = styled.div`
   /* border: 1px solid blue; */
   margin-top: 4rem;
   margin-left: 5rem;
+  margin-bottom: 2rem;
 `;
 
 const HourContainer = styled.div`
@@ -43,7 +49,7 @@ const HourContainer = styled.div`
     border: 1px solid red;
   }
 
-  /* &:nth-last-child(25){
+  /* &:nth-last-child(1){
   background-color: red;
 } */
 
@@ -60,120 +66,70 @@ const HourContainer = styled.div`
 
 const Create = styled.div``;
 
-const dailyArr = [
-  {
-    time: "0 AM",
-    // eventName: 'Lollll'
-  },
-  {
-    time: "1 AM",
-    event: false,
-  },
-  {
-    time: "2 AM",
-    event: false,
-  },
-  {
-    time: "3 AM",
-    event: false,
-  },
-  {
-    time: "4 AM",
-    event: false,
-  },
-  {
-    time: "5 AM",
-    event: false,
-  },
-  {
-    time: "6 AM",
-    event: false,
-  },
-  {
-    time: "7 AM",
-    event: false,
-  },
-  {
-    time: "8 AM",
-    event: false,
-  },
-  {
-    time: "9 AM",
-    event: false,
-  },
-  {
-    time: "10 AM",
-    event: false,
-  },
-  {
-    time: "11 AM",
-    event: false,
-  },
-  {
-    time: "12 AM",
-    event: false,
-  },
-  {
-    time: "1 pM",
-    event: false,
-  },
-  {
-    time: "2 PM",
-    event: false,
-  },
-  {
-    time: "3 PM",
-    event: false,
-  },
-  {
-    time: "4 PM",
-    event: false,
-  },
-  {
-    time: "5 PM",
-    event: false,
-  },
-  {
-    time: "6 PM",
-  },
-  {
-    time: "7 PM",
-  },
-  {
-    time: "8 PM",
-  },
-  {
-    time: "9 PM",
-  },
-  {
-    time: "10 PM",
-  },
-  {
-    time: "11 PM",
-  },
-  {
-    time: "12 PM",
-  },
-];
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 600,
+  bgcolor: 'background.paper',
+  border: 0,
+  boxShadow: 24,
+  p: 4,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center'
+};
 
 const Home = () => {
   const [value, onChange] = useState(new Date());
+  const [eventStartTime, setEventStartTime] = useState('')
+  const [eventEndTime, setEventEndTime] = useState('')
+
+  //  modal props
+  const [open, setOpen] = React.useState(false);
+  // const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleOpen = (startTime, endTime) => {
+    setEventStartTime(startTime)
+    setEventEndTime(endTime)
+    setOpen(true);
+  }
 
   useEffect(() => {
     console.log(value);
   }, [value]);
+
+  const addEventHandler = (id) => {
+    //  grab elements
+    // create child p --> event name
+
+    const hourDiv = document.getElementById(`${id}`);
+
+    let p = document.createElement('p');
+    p.textContent = 'This is my new event';
+
+    hourDiv.appendChild(p)
+  }
 
   const divCont = [];
 
   for (let am = 0; am < 2; am++) {
     if (am === 0) {
       for (let time = 0; time < 13; time++) {
-        divCont.push(<HourContainer onClick={() => alert(time + ' AM')}  time={`${time} AM`}></HourContainer>);
+        if ( time === 12 ) {
+          divCont.push(<HourContainer onClick={() => handleOpen(`${time} AM`, '1 PM')} id={`${time}AM`} time={`${time} AM`}></HourContainer>);
+        } else {
+          // divCont.push(<HourContainer onClick={() => addEventHandler(`${time}AM`)} id={`${time}AM`} time={`${time} AM`}></HourContainer>);
+          divCont.push(<HourContainer onClick={() => handleOpen(`${time} AM`, `${time + 1} AM`)} id={`${time}AM`} time={`${time} AM`}></HourContainer>);
+        }
       }
     }
     if (am === 1) {
-      for (let time = 1; time < 13; time++) {
-        divCont.push(<HourContainer onClick={() => alert(time + ' PM')} time={`${time} PM`}></HourContainer>);
+      for (let time = 1; time < 12; time++) {
+        divCont.push(<HourContainer onClick={() => handleOpen(`${time} PM`, `${time + 1} PM`)} id={`${time}PM`}  time={`${time} PM`}></HourContainer>);
       }
     }
   }
@@ -187,6 +143,36 @@ const Home = () => {
         <Calendar onChange={onChange} value={value} />
       </CalenderSection>
       <DailySchedule>{divCont}</DailySchedule>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h4" component="h2">
+            Create Event
+          </Typography>
+          <TextField id="standard-basic" label="Event Name" variant="standard" />
+          <textarea name="" id="" cols="30" rows="10" placeholder="Event Description" ></textarea>
+          <TextField
+          id="filled-read-only-input"
+          defaultValue={eventStartTime}
+          InputProps={{
+            readOnly: true,
+          }}
+          variant="filled"
+        />
+          <TextField
+          id="filled-read-only-input"
+          defaultValue={eventEndTime}
+          InputProps={{
+            readOnly: true,
+          }}
+          variant="filled"
+        />
+        </Box>
+      </Modal>
     </Section>
   );
 };
