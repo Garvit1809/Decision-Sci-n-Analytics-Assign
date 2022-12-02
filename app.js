@@ -4,6 +4,8 @@ const cors = require('cors');
 
 const userRouter = require('./routes/userRoutes')
 
+const globalErrorHandler = require('./controllers/errorController')
+
 const app = express();
 require("dotenv").config();
 
@@ -15,6 +17,8 @@ app.get("/", (req,res) => {
 });
 
 app.use('/api/auth', userRouter);
+
+app.use(globalErrorHandler)
 
 const PORT = process.env.PORT;
 
