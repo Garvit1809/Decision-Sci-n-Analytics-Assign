@@ -13,7 +13,7 @@ router
   .get(eventController.getAllUserEvents)
   .post(eventController.postEvent);
 
-// router.route("/day/:day").get(eventController.getUserEvents);
+router.route("/day/:year(\\d{4})-:month(\\d{2})-:day(\\d{2})").get(eventController.getUserEvents);
 
 router
   .route("/:id")
@@ -21,9 +21,3 @@ router
   .delete(eventController.deleteEvent);
 
 module.exports = router;
-
-//  get all events --> for dev
-//  get users all events
-//  get events for user for one day
-//  update event
-//  delete event

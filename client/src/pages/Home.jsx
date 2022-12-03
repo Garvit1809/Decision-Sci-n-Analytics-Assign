@@ -98,9 +98,18 @@ const Home = () => {
     setOpen(true);
   }
 
+  // useEffect(() => {
+  //   console.log(value);
+  // }, [value]);
+
   useEffect(() => {
-    console.log(value);
-  }, [value]);
+    function getMonthFromString(mon){
+      return new Date(Date.parse(mon +" 1, 2012")).getMonth()+1
+   }
+   const date = getMonthFromString('dec')
+   console.log(date);
+  }, [])
+  
 
   const addEventHandler = (id) => {
     //  grab elements
