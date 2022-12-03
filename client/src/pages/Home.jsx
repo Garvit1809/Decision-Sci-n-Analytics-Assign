@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import axios from "axios";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import Modal from '@mui/material/Modal';
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
 import { TextField } from "@mui/material";
+import { BASE_URL, EventEnd } from "../utils/APIRoutes";
+import { LOCALSTORAGE_USER } from "../utils/GlobalConstants";
 
 const Section = styled.div`
   /* width: 100vw; */
@@ -67,49 +70,96 @@ const HourContainer = styled.div`
 const Create = styled.div``;
 
 const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
   width: 600,
-  bgcolor: 'background.paper',
+  bgcolor: "background.paper",
   border: 0,
   boxShadow: 24,
   p: 4,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center'
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const Home = () => {
-  const [value, onChange] = useState(new Date());
-  const [eventStartTime, setEventStartTime] = useState('')
-  const [eventEndTime, setEventEndTime] = useState('')
+  const [date, setDate] = useState(new Date());
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [convertedDate, setConvertedDate] = useState("");
+
+  const [createEvent, setCreateEvent] = useState({
+    eventName: "",
+    eventDescription: "",
+    startTime: "",
+    endTIme: "",
+  });
+
+  const [currentUser, setCurrentUser] = useState();
 
   //  modal props
   const [open, setOpen] = React.useState(false);
-  // const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-
   const handleOpen = (startTime, endTime) => {
-    setEventStartTime(startTime)
-    setEventEndTime(endTime)
+    setEventStartTime(startTime);
+    setEventEndTime(endTime);
+    setCreateEvent({ ...createEvent, startTime: startTime, endTime: endTime });
     setOpen(true);
+  };
+
+  const [todaysEvents, setTodaysEvents] = useState()
+
+  function convert(str) {
+    var date = new Date(str),
+      mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+      day = ("0" + date.getDate()).slice(-2);
+    return [date.getFullYear(), mnth, day].join("-");
   }
 
-  // useEffect(() => {
-  //   console.log(value);
-  // }, [value]);
+  const getMongoReadableTime = (time) => {};
 
   useEffect(() => {
-    function getMonthFromString(mon){
-      return new Date(Date.parse(mon +" 1, 2012")).getMonth()+1
-   }
-   const date = getMonthFromString('dec')
-   console.log(date);
-  }, [])
-  
+    console.log(currentUser);
+    const user = JSON.parse(localStorage.getItem(LOCALSTORAGE_USER));
+    setCurrentUser(user);
+  }, []);
+
+  useEffect(() => {
+    console.log(date);
+    const convertedDate = convert(date);
+    console.log(convertedDate);
+    setConvertedDate(convertedDate);
+  }, [date]);
+
+  useEffect(() => {
+    async function getEventsByDay() {
+      if (currentUser) {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${currentUser.token}`,
+          },
+        };
+        const { data } = await axios.get(
+          `${BASE_URL}${EventEnd}/day/${convertedDate}`,
+          config
+        );
+        console.log(data.events);
+        setTodaysEvents(data.events)
+      }
+    }
+    getEventsByDay();
+  }, [convertedDate]);
+
+  useEffect(() => {
+    function getMonthFromString(mon) {
+      return new Date(Date.parse(mon + " 1, 2012")).getMonth() + 1;
+    }
+    const date = getMonthFromString("dec");
+    console.log(date);
+  }, []);
 
   const addEventHandler = (id) => {
     //  grab elements
@@ -117,31 +167,62 @@ const Home = () => {
 
     const hourDiv = document.getElementById(`${id}`);
 
-    let p = document.createElement('p');
-    p.textContent = 'This is my new event';
+    let p = document.createElement("p");
+    p.textContent = "This is my new event";
 
-    hourDiv.appendChild(p)
-  }
+    hourDiv.appendChild(p);
+  };
 
   const divCont = [];
 
   for (let am = 0; am < 2; am++) {
     if (am === 0) {
       for (let time = 0; time < 13; time++) {
-        if ( time === 12 ) {
-          divCont.push(<HourContainer onClick={() => handleOpen(`${time} AM`, '1 PM')} id={`${time}AM`} time={`${time} AM`}></HourContainer>);
+        if (time === 12) {
+          divCont.push(
+            <HourContainer
+              onClick={() => handleOpen(`${time} AM`, "1 PM")}
+              id={`${time}AM`}
+              time={`${time} AM`}
+            ></HourContainer>
+          );
         } else {
           // divCont.push(<HourContainer onClick={() => addEventHandler(`${time}AM`)} id={`${time}AM`} time={`${time} AM`}></HourContainer>);
-          divCont.push(<HourContainer onClick={() => handleOpen(`${time} AM`, `${time + 1} AM`)} id={`${time}AM`} time={`${time} AM`}></HourContainer>);
+          divCont.push(
+            <HourContainer
+              onClick={() => handleOpen(`${time} AM`, `${time + 1} AM`)}
+              id={`${time}AM`}
+              time={`${time} AM`}
+            ></HourContainer>
+          );
         }
       }
     }
     if (am === 1) {
       for (let time = 1; time < 12; time++) {
-        divCont.push(<HourContainer onClick={() => handleOpen(`${time} PM`, `${time + 1} PM`)} id={`${time}PM`}  time={`${time} PM`}></HourContainer>);
+        divCont.push(
+          <HourContainer
+            onClick={() => handleOpen(`${time} PM`, `${time + 1} PM`)}
+            id={`${time}PM`}
+            time={`${time} PM`}
+          ></HourContainer>
+        );
       }
     }
   }
+
+  // if (todaysEvents) {
+    
+  // }
+
+  const handleChange = (e) => {
+    setCreateEvent({ ...createEvent, [e.target.name]: e.target.value });
+  };
+
+  const eventHandler = (e) => {
+    e.preventDefault();
+    console.log(createEvent);
+  };
 
   return (
     <Section>
@@ -149,7 +230,7 @@ const Home = () => {
         <Create>
           <button>Create</button>
         </Create>
-        <Calendar onChange={onChange} value={value} />
+        <Calendar onChange={setDate} value={date} />
       </CalenderSection>
       <DailySchedule>{divCont}</DailySchedule>
       <Modal
@@ -162,24 +243,24 @@ const Home = () => {
           <Typography id="modal-modal-title" variant="h4" component="h2">
             Create Event
           </Typography>
-          <TextField id="standard-basic" label="Event Name" variant="standard" />
-          <textarea name="" id="" cols="30" rows="10" placeholder="Event Description" ></textarea>
-          <TextField
-          id="filled-read-only-input"
-          defaultValue={eventStartTime}
-          InputProps={{
-            readOnly: true,
-          }}
-          variant="filled"
-        />
-          <TextField
-          id="filled-read-only-input"
-          defaultValue={eventEndTime}
-          InputProps={{
-            readOnly: true,
-          }}
-          variant="filled"
-        />
+          <form onSubmit={eventHandler}>
+            <input
+              type="text"
+              name="eventName"
+              value={createEvent.eventName}
+              onChange={(e) => handleChange(e)}
+            />
+            <textarea
+              name="eventDescription"
+              placeholder="Event Description"
+              value={createEvent.eventDescription}
+              onChange={handleChange}
+            ></textarea>
+            <div>
+              {eventStartTime} -- {eventEndTime}
+            </div>
+            <button type="submit">Create</button>
+          </form>
         </Box>
       </Modal>
     </Section>
@@ -199,3 +280,8 @@ export default Home;
 //     )
 //   })
 // }
+
+// 1) Create an event
+// 2) get all events of user
+// 3) get events by dat
+// 4) map events
