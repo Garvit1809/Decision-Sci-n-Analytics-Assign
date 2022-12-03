@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const userRouter = require('./routes/userRoutes')
+const eventRouter = require('./routes/eventRoutes')
 
 const globalErrorHandler = require('./controllers/errorController')
 
@@ -17,6 +18,7 @@ app.get("/", (req,res) => {
 });
 
 app.use('/api/auth', userRouter);
+app.use('/api/events', eventRouter)
 
 app.use(globalErrorHandler)
 

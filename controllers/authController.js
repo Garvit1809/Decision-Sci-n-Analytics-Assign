@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -58,4 +59,36 @@ exports.login = catchAsync(async (req, res, next) => {
     }
   
     createSendToken(user, 200, res);
+  });
+
+  exports.protect = catchAsync(async (req, res, next) => {
+    let token;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+  
+    if (!token) {
+      res.status(401).json({
+        status: 'error',
+        message: 'You are not logged in! Please log in to get access.",'
+      })
+    }
+  
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    // console.log(decoded);
+
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      res.status(401).json({
+        status: fail,
+        message: 'The user belonging to this token does no longer exist'
+      })
+    }
+  
+    req.user = currentUser;
+    // console.log(currentUser);
+    next();
   });
