@@ -18,7 +18,7 @@ const eventSchema = new mongoose.Schema({
         type: Date,
         default: Date.now(),
     },
-    EndTime: {
+    endTime: {
         type: Date,
         default: Date(Date.now() + 3600000),
     },

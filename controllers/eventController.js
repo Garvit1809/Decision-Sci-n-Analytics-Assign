@@ -42,7 +42,31 @@ exports.postEvent = catchAsync(async (req, res) => {
 });
 
 exports.getUserEvents = catchAsync(async (req, res) => {
-  res.send("Todays Events");
+  let queryDate = new Date(
+    +req.params.year,
+    +req.params.month - 1,
+    +req.params.day
+  )
+
+  let EndDate = new Date(
+    +req.params.year,
+    +req.params.month - 1,
+    +req.params.day + 1
+  )
+
+  const events = await Event.find({
+    "startTime": {
+        "$gte": new Date(queryDate),
+        "$lte": new Date(EndDate)
+    }
+  })
+
+  res.status(200).json({
+    status: 'success',
+    queryDate,
+    EndDate,
+    events
+  })
 });
 
 exports.updateEvent = catchAsync(async (req, res) => {
